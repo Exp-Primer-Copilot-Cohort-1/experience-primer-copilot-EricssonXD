@@ -1,36 +1,44 @@
-// Create Web server
+// Create web server
 const express = require('express');
-const app = express();
-// Connect to MongoDB
-const mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost:27017/comments', { useNewUrlParser: true, useUnifiedTopology: true });
-// Create schema for comments
-const commentSchema = new mongoose.Schema({
-    name: String,
-    comment: String
-});
-// Create model for comments
-const Comment = mongoose.model('Comment', commentSchema);
-// Create a new comment
-const newComment = new Comment({ name: 'Pete Hunt', comment: 'This is one comment' });
-newComment.save(function (err, comment) {
-    if (err) return console.error(err);
-    console.log(comment);
-});
-// Create route for comments
-app.get('/', function (req, res) {
-    Comment.find(function (err, comments) {
-        if (err) return console.error(err);
-        console.log(comments);
-        res.send(comments);
-    })
-});
-// Start server
-app.listen(3000, function () {
-    console.log('Server listening on port 3000');
-});
+const router = express.Router();
+const commentController = require('../controllers/commentController');
+const auth = require('../middleware/auth');
+const { check } = require('express-validator');
 
+// Create comment
+// api/comments
+router.post('/', 
+    auth,
+    [
+        check('name', 'Name is required').not().isEmpty(),
+        check('email', 'Email is required').isEmail(),
+        check('message', 'Message is required').not().isEmpty(),
+        check('date', 'Date is required').not().isEmpty()
+    ],
+    commentController.createComment
+);
 
+// Get all comments
+router.get('/',
+    commentController.getComments
+);
 
+// Update comment via ID
+router.put('/:id', 
+    auth,
+    [
+        check('name', 'Name is required').not().isEmpty(),
+        check('email', 'Email is required').isEmail(),
+        check('message', 'Message is required').not().isEmpty(),
+        check('date', 'Date is required').not().isEmpty()
+    ],
+    commentController.updateComment
+);
 
+// Delete comment via ID
+router.delete('/:id', 
+    auth,
+    commentController.deleteComment
+);
 
+module.exports = router;
